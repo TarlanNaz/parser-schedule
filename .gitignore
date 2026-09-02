@@ -1,0 +1,19 @@
+# Зависимости и исполняемые файлы
+*.exe
+*.exe filter
+*.dll
+*.so
+*.dylib
+bin/
+main
+
+# Конфигурационные файлы с приватными данными
+.env
+credentials.json
+token.json
+
+# Настройки IDE и ОС
+.idea/
+.vscode/
+.DS_Store
+*.log
