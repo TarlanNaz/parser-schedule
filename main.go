@@ -21,6 +21,27 @@ import (
 
 const weeksAhead = 4 // Выгрузка на 4 недели вперед
 // Неа
+// parseSkipWeekdays разбирает список дней недели, которые не нужно выгружать,
+// например "sat" или "sat,sun". Допустимы англ. и рус. сокращения.
+func parseSkipWeekdays(raw string) map[time.Weekday]bool {
+	names := map[string]time.Weekday{
+		"mon": time.Monday, "пн": time.Monday,
+		"tue": time.Tuesday, "вт": time.Tuesday,
+		"wed": time.Wednesday, "ср": time.Wednesday,
+		"thu": time.Thursday, "чт": time.Thursday,
+		"fri": time.Friday, "пт": time.Friday,
+		"sat": time.Saturday, "сб": time.Saturday,
+		"sun": time.Sunday, "вс": time.Sunday,
+	}
+	res := map[time.Weekday]bool{}
+	for _, part := range strings.Split(raw, ",") {
+		if wd, ok := names[strings.ToLower(strings.TrimSpace(part))]; ok {
+			res[wd] = true
+		}
+	}
+	return res
+}
+
 // Цвета Google Calendar:
 // "2" - Sage (Зеленый) для Лекций
 // "6" - Tangerine (Оранжевый) для Практик
@@ -58,6 +79,8 @@ func main() {
 
 	defaultGroupID := getEnv("DEFAULT_GROUP_ID", "535")
 	calID := getEnv("GOOGLE_CALENDAR_ID", "primary")
+	// Дни недели, занятия в которые не добавляются в календарь (по умолчанию — суббота)
+	skipWeekdays := parseSkipWeekdays(getEnv("SKIP_WEEKDAYS", "sat"))
 
 	reader := bufio.NewReader(os.Stdin)
 
@@ -171,6 +194,11 @@ func main() {
 		t1, err1 := time.ParseInLocation(layout, l.Date+" "+l.BeginLesson, loc)
 		t2, err2 := time.ParseInLocation(layout, l.Date+" "+l.EndLesson, loc)
 		if err1 != nil || err2 != nil {
+			continue
+		}
+
+		// Пропускаем занятия в исключённые дни недели (по умолчанию — суббота)
+		if skipWeekdays[t1.Weekday()] {
 			continue
 		}
 
